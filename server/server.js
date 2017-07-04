@@ -28,3 +28,5 @@ app.get('/todos/:id', (req, res) => {
 });
 
 app.listen(3000, () => console.log('Server started and listening to Port 3000'));
+
+module.exports = {app};
