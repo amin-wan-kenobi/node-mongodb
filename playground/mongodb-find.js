@@ -10,7 +10,7 @@ MongoClient.connect('mongodb://localhost:27017/ToDoApp', (err, db) => {
     db.collection('Todos').find(
             {_id: new ObjectID('59566f1129066a05c0b0b8f3')}
         ).toArray().then((result) => {
-        console.log(JSON.stringify(result, undefined, 2));
+            console.log(JSON.stringify(result, undefined, 2));
     }, (err) => {
         console.log('Error happened', err);
     });
