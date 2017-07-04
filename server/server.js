@@ -23,8 +23,13 @@ app.post('/todos', (req, res) => {
     })
 });
 
-app.get('/todos/:id', (req, res) => {
-
+app.get('/todos', (req, res) => {
+    Todo.find().then((todos) => {
+        //Always better to return an object so we can send other good stuff as well if we want to
+        res.send({todos});
+    }, (err) => {
+        res.status(400).send(err);
+    })
 });
 
 app.listen(3000, () => console.log('Server started and listening to Port 3000'));
