@@ -23,7 +23,7 @@ beforeEach( (done) => {
     }).then(() =>  done());
 })
 
-describe('POST / todos', () =>{
+describe('POST /todos', () => {
 
     it('should create a new TODO', (done) => {
         var text = 'Text todo text';
@@ -49,7 +49,7 @@ describe('POST / todos', () =>{
                 }).catch( (e) => {
                     done(e);
                 })
-            })
+            });
     });
     it('should not create data with invalid data', (done) => {
         request(app)
