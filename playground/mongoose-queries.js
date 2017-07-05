@@ -49,4 +49,6 @@ User.findOne({
     console.log('User FindOne', user);
 }).catch((err) => console.log(err));
 
-User.findById(userId).then((user) => console.log(user), (err) => console.log(err)).catch((e) => console.log(e));
+User.findById(userId).then(
+    (user) => console.log(user), 
+    (err) => console.log(err)).catch((e) => console.log(e));
