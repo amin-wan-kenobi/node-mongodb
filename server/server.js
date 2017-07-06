@@ -1,6 +1,7 @@
-var express = require('express');
-var {ObjectID} = require('mongodb');
-var bodyParser = require('body-parser');
+const _ = require('lodash');
+const express = require('express');
+const {ObjectID} = require('mongodb');
+const bodyParser = require('body-parser');
 //Parse incoming request bodies in a middleware before your handlers, available under the req.body property.
 
 var {mongoose} = require('./db/mongoose.js');
@@ -68,6 +69,37 @@ app.delete('/todos/:id', (req, res) => {
     }).catch( (e) => {
         res.status(400).send(e);
     })
+});
+
+app.patch('/todos/:id', (req, res) => {
+    var id = req.params.id;
+    var body = _.pick(req.body, ['text', 'completed']);
+
+    if(!ObjectID.isValid(id)){
+        return res.status(404).send();
+    }
+
+    if(_.isBoolean(body.completed) && body.completed){
+        body.completedAt = new Date().getTime();
+        body.completed = true;
+    }else{
+        body.completed = false;
+        body.completedAt = null;
+    }
+
+    Todo.findByIdAndUpdate(id, {$set:{
+            completed: body.completed,
+            completedAt: body.completedAt
+        }},{new: true}).then( (todo) => {
+        if(!todo){
+            return res.status(404).send();
+        }
+        res.send({todo});
+    }, (err) => {
+        res.status(404).send(err);
+    }).catch( (e) => {
+        res.status(400).send(e);
+    });
 });
 
 app.listen(port, () => console.log(`Server started and listening to Port ${port}`));
