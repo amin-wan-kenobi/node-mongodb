@@ -1,32 +1,53 @@
 const expect = require('expect');
 const request = require('supertest');
-const {ObjectID} = require('mongodb');
+const { ObjectID } = require('mongodb');
 
-const {app} = require('./../server');
-const {Todo} = require('./../models/todo');
+const { app } = require('./../server');
+const { Todo } = require('./../models/todo');
+const { User } = require('./../models/user');
 
 const todos = [{
-        _id: new ObjectID(),
-        text: 'First test todo'
-    }, {
-        _id: new ObjectID(),
-        text: 'Second test todo',
-        completed: true,
-        completedAt: 333
-    }];
+    _id: new ObjectID(),
+    text: 'First test todo'
+}, {
+    _id: new ObjectID(),
+    text: 'Second test todo',
+    completed: true,
+    completedAt: 333
+}];
+
+const users = [{
+    _id: new ObjectID(),
+    email: 'user1@example.com',
+    password: '1234567890',
+    tokens: [{
+        access: "auth",
+        token: "123456789012345678901234567890"
+    }]
+}, {
+    _id: new ObjectID(),
+    email: 'user2@example.com',
+    password: '0987654321',
+    tokens: [{
+        access: "auth",
+        token: "098765432109876543210987654321"
+    }]
+}];
+
 
 // beforeEach( (done) => {
 //     Todo.remove({}).then( () => {
 //         done();
 //     })
 // });
-//Above should be modified as it always remove everything in the collection so that is not really suitable approach
+//Above should be modified as it always remove everything in the collection 
+//so that is not really suitable approach
 
-beforeEach( (done) => {
-    Todo.remove({}).then( () => {
+beforeEach((done) => {
+    Todo.remove({}).then(() => {
         return Todo.insertMany(todos);
-    }).then(() =>  done());
-})
+    }).then(() => done());
+});
 
 describe('POST /todos', () => {
 
@@ -39,19 +60,19 @@ describe('POST /todos', () => {
                 text
             })
             .expect(200)
-            .expect( (res) => {
+            .expect((res) => {
                 expect(res.body.text).toBe(text);
             })
-            .end( (err, res) => {
-                if(err){
+            .end((err, res) => {
+                if (err) {
                     return done(err);
                 }
 
-                Todo.find({text}).then( (todos) => {
+                Todo.find({ text }).then((todos) => {
                     expect(todos.length).toBe(1);
                     expect(todos[0].text).toBe(text);
                     done();
-                }).catch( (e) => {
+                }).catch((e) => {
                     done(e);
                 })
             });
@@ -61,14 +82,14 @@ describe('POST /todos', () => {
             .post('/todos')
             .send({})
             .expect(400)
-            .end( (err, res) => {
-                if(err){
+            .end((err, res) => {
+                if (err) {
                     return done(err);
                 }
-                Todo.find().then( (todos) => {
+                Todo.find().then((todos) => {
                     expect(todos.length).toBe(2);
                     done();
-                }).catch( (e) => {
+                }).catch((e) => {
                     done(e);
                 });
             });
@@ -79,7 +100,7 @@ describe('GET /todos', () => {
         request(app)
             .get('/todos')
             .expect(200)
-            .expect( (res) => {
+            .expect((res) => {
                 expect(res.body.todos.length).toBe(2);
             })
             .end(done);
@@ -91,7 +112,7 @@ describe('GET /todos/:id', () => {
         request(app)
             .get(`/todos/${todos[0]._id.toHexString()}`)
             .expect(200)
-            .expect( (res) => {
+            .expect((res) => {
                 expect(res.body.todo.text).toBe(todos[0].text)
             })
             .end(done);
@@ -117,18 +138,18 @@ describe('DELETE /todos/:id', () => {
         request(app)
             .delete(`/todos/${hexId}`)
             .expect(200)
-            .expect( (res) => {
+            .expect((res) => {
                 expect(res.body.todo._id).toBe(hexId);
             })
-            .end( (err, res) => {
-                if(err){
+            .end((err, res) => {
+                if (err) {
                     return done(err);
                 }
                 //Try to find the object you deleted and see if the things was deleted
-                Todo.findById(hexId).then( (todo) => {
+                Todo.findById(hexId).then((todo) => {
                     expect(todo).toNotExist();
                     done();
-                }).catch( (e) => done(e));
+                }).catch((e) => done(e));
             });
     });
     it('should return 404 if todo not found', (done) => {
@@ -144,7 +165,7 @@ describe('DELETE /todos/:id', () => {
             .expect(404)
             .end(done);
     });
-    
+
 });
 
 describe('PATCH /todos/:id', () => {
@@ -158,7 +179,7 @@ describe('PATCH /todos/:id', () => {
                 completed: true
             })
             .expect(200)
-            .expect( (res) => {
+            .expect((res) => {
                 //Let's make some assertions
                 expect(res.body.todo.text).toBe(text);
                 expect(res.body.todo.completed).toBe(true);
@@ -176,11 +197,49 @@ describe('PATCH /todos/:id', () => {
                 text
             })
             .expect(200)
-            .expect( (res) => {
+            .expect((res) => {
                 expect(res.body.todo.text).toBe(text);
                 expect(res.body.todo.completed).toBe(false);
                 expect(res.body.completedAt).toNotExist();
             })
+            .end(done);
+    });
+});
+
+describe('POST /users', () => {
+    beforeEach((done) => {
+        User.remove({}).then(() => {
+            return User.insertMany(users);
+        }).then(() => done());
+    });
+
+    it('should create new user', (done) => {
+        var email = "testUser@example.com";
+        var password = "123456";
+        request(app)
+            .post('/users')
+            .send({
+                email,
+                password
+            })
+            .expect(200)
+            .expect((res) => {
+                expect(res.body.user.email).toBe(email);
+                expect(res.body.user.password).toBe(password);
+            })
+            .end(done);
+    });
+
+    it('should not add duplicated email', (done) => {
+        var email = "user1@example.com";
+        var password = "123456";
+        request(app)
+            .post('/users')
+            .send({
+                email,
+                password
+            })
+            .expect(400)
             .end(done);
     });
 });
