@@ -22,7 +22,7 @@ const users = [{
     password: '1234567890',
     tokens: [{
         access: "auth",
-        token: "123456789012345678901234567890"
+        token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI1OTY0MGYxYWY1NWY1ZDBhYzJjMjQxNWYiLCJhY2Nlc3MiOiJhdXRoIiwiaWF0IjoxNDk5NzI5NjkwfQ.I6Rc7witFRoInXiO6dZbqgbDxEXFs6MXvJxdADD0S6w"
     }]
 }, {
     _id: new ObjectID(),
@@ -30,7 +30,7 @@ const users = [{
     password: '0987654321',
     tokens: [{
         access: "auth",
-        token: "098765432109876543210987654321"
+        token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI1OTY0MGY0ZGY1NWY1ZDBhYzJjMjQxNjEiLCJhY2Nlc3MiOiJhdXRoIiwiaWF0IjoxNDk5NzI5NzQxfQ.HwTDI5dlRf8d1xGdLSNTDlVd-QBEibfJZUmKiwsTO3Y"
     }]
 }];
 
@@ -239,6 +239,27 @@ describe('POST /users', () => {
                 password
             })
             .expect(400)
+            .end(done);
+    });
+});
+
+describe('GET /users/me', () => {
+    it('should give user information by right token', (done) => {
+        request(app)
+            .get('/users/me')
+            .set('x-auth', users[0].tokens[0].token)
+            .expect(200)
+            .expect( (res) => {
+                expect(res.body.user.email).toBe(users[0].email);
+            })
+            .end(done);
+    });
+
+    it('should reject request with wrong token', (done) => {
+        request(app)
+            .get('/users/me')
+            .set('x-auth', users[0].tokens[0].token + 'WRONG_TOKEN')
+            .expect(401)
             .end(done);
     });
 });

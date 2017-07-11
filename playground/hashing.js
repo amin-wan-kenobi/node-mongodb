@@ -37,3 +37,21 @@ console.log(token2);
 
 var decodedResult = jwt.verify(token2, 'MySecret');
 console.log(decodedResult);
+
+
+
+const bcrypt = require('bcryptjs');
+var password = '123abd!';
+
+//10 is number of rounds we want to use to generate the salt. Longer number, longer the algorytm will take
+bcrypt.genSalt(10, (err, salt) => {
+    console.log('SALT', salt);
+    bcrypt.hash(password, salt, (err, hash) => {
+        console.log('HASH', hash);
+    });
+});
+
+var hashedPassword = '$2a$10$45eCOEeT.hshZTwrhtu.k.wuMmEjmTlJJIt7Q4aWGTqiHHghztus6';
+bcrypt.compare(password, hashedPassword, (err, res) => {
+    console.log(res);
+});
