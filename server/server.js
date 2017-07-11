@@ -121,7 +121,7 @@ app.post('/users', (req, res) => {
 
 app.get('/users/me', authenticate, (req, res) => {
     //We already have req object here by authenticate middleware
-    res.send(req.user);
+    res.send({user: req.user});
 });
 
 app.listen(port, () => console.log(`Server started and listening to Port ${port}`));
