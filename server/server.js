@@ -119,24 +119,43 @@ app.get('/todos/:id', authenticate, (req, res) => {
 //     })
 // });
 
-app.delete('/todos/:id', authenticate, (req, res) => {
-    var id = req.params.id;
+// app.delete('/todos/:id', authenticate, (req, res) => {
+//     var id = req.params.id;
+//     if(!ObjectID.isValid(id)){
+//         return res.status(404).send();
+//     }
+//     Todo.findOneAndRemove({
+//         _id: id,
+//         _creator: req.user._id
+//     }).then( (todo) => {
+//         if(!todo){
+//             return res.status(404).send();
+//         }
+//         res.send({todo});
+//     }, (err) => {
+//         res.status(400).send(err);
+//     }).catch( (e) => {
+//         res.status(400).send(e);
+//     })
+// });
+
+app.delete('/todos/:id', authenticate, async (req, res) => {
+    const id = req.params.id;
     if(!ObjectID.isValid(id)){
         return res.status(404).send();
     }
-    Todo.findOneAndRemove({
-        _id: id,
-        _creator: req.user._id
-    }).then( (todo) => {
+    try{
+        const todo = await Todo.findOneAndRemove({
+            _id: id,
+            _creator: req.user._id
+        });
         if(!todo){
             return res.status(404).send();
         }
         res.send({todo});
-    }, (err) => {
-        res.status(400).send(err);
-    }).catch( (e) => {
+    }catch(e){
         res.status(400).send(e);
-    })
+    }
 });
 
 // app.patch('/todos/:id', (req, res) => {
@@ -206,42 +225,78 @@ app.patch('/todos/:id', authenticate, (req, res) => {
     });
 });
 
-app.post('/users', (req, res) => {
-    var body = _.pick(req.body, ['email', 'password']);
-    var user = new User(body);
-    user.save().then( () => {
-        return user.generateAuthToken()
-    }).then((token) => {
-        res.header('x-auth', token).send({user});
-    })
-    .catch( (e) => {
-        res.status(400).send(e);
-    });
-});
+// app.post('/users', (req, res) => {
+//     var body = _.pick(req.body, ['email', 'password']);
+//     var user = new User(body);
+//     user.save().then( () => {
+//         return user.generateAuthToken()
+//     }).then((token) => {
+//         res.header('x-auth', token).send({user});
+//     })
+//     .catch( (e) => {
+//         res.status(400).send(e);
+//     });
+// });
 
+app.post('/users', async (req, res) => {
+    try{
+        const body = _.pick(req.body, ['email', 'password']);
+        const user = new User(body);
+        await user.save();
+        const token = await user.generateAuthToken();
+        res.header('x-auth', token).send({user});
+    }catch(e){
+        res.status(400).send(e);
+    }
+});
+//////////////////////////////////////////////////////////////////////////////////////////////////////
 app.get('/users/me', authenticate, (req, res) => {
     //We already have req object here by authenticate middleware
     res.send({user: req.user});
 });
 
-app.post('/users/login', (req, res) => {
-    var body = _.pick(req.body, ['email', 'password']);
-    User.findByCredentials(body.email, body.password).then( (user) => {
-        return user.generateAuthToken().then( (token) => {
-            res.header('x-auth', token).send({user});
-        });
-    })
-    .catch((e) => {
-        res.status(400).send();
-    });
-});
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+// app.post('/users/login', (req, res) => {
+//     var body = _.pick(req.body, ['email', 'password']);
+//     User.findByCredentials(body.email, body.password).then( (user) => {
+//         return user.generateAuthToken().then( (token) => {
+//             res.header('x-auth', token).send({user});
+//         });
+//     })
+//     .catch((e) => {
+//         res.status(400).send();
+//     });
+// });
 
-app.delete('/users/me/token', authenticate, (req, res) => {
-    req.user.removeToken(req.token).then( () => {
-        res.status(200).send();
-    }, () => {
+//Below is the same as above but with the help of async
+app.post('/users/login', async (req, res) => {
+    try{
+        const body = _.pick(req.body, ['email', 'password']);
+        const user = await User.findByCredentials(body.email, body.password);
+        const token = await user.generateAuthToken();
+        res.header('x-auth', token).send({user});
+    }catch(e){
         res.status(400).send();
-    });
+    }
+});
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// app.delete('/users/me/token', authenticate, (req, res) => {
+//     req.user.removeToken(req.token).then( () => {
+//         res.status(200).send();
+//     }, () => {
+//         res.status(400).send();
+//     });
+// });
+
+//below is the same as above but with the help of async await
+app.delete('/users/me/token', authenticate, async (req, res) => {
+    try{
+        await req.user.removeToken(req.token);
+        res.status(200).send();
+    }catch(e){
+        res.status(400).send();
+    }
 });
 
 app.listen(port, () => console.log(`Server started and listening to Port ${port}`));
